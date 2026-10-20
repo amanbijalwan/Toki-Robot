@@ -7,7 +7,7 @@ A mini companiton desk robot.
     Also we can add animated facial expressions in this step.
     Additional script added for touch sensor, also use Serial port(type 1 and enter) to change faces in other script.
     
-    <img width="420" height="460" alt="image" src="https://github.com/user-attachments/assets/1520eec2-e310-4438-a675-7799c7150816" />
+<img width="420" height="460" alt="image" src="https://github.com/user-attachments/assets/1520eec2-e310-4438-a675-7799c7150816" />
 
 
 ## 2. Now test for webserver, we want to use the face oled script and webserver.
