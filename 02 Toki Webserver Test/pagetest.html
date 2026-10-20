@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toki Companion</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #10131a;
+  --panel: #1b2230;
+  --accent: #80e0cb;
+  --text: #f1f4fa;
+  --muted: #a4afc0;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 24px 16px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, sans-serif;
+}
+main { max-width: 650px; margin: auto; }
+header { margin-bottom: 24px; }
+h1 { color: var(--accent); margin: 0; font-size: 2rem; }
+.subtitle { color: var(--muted); margin-top: 5px; }
+.panel {
+  background: var(--panel);
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+h2 { font-size: 1rem; margin: 0 0 14px; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+button {
+  border: 1px solid #414c60;
+  background: #303b4d;
+  color: var(--text);
+  border-radius: 11px;
+  padding: 13px 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  flex: 1;
+}
+button:active { transform: scale(.98); }
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+button.primary {
+  background: #246c60;
+  border-color: #246c60;
+}
+button.active { border-color: var(--accent); color: var(--accent); }
+.status {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.label { color: var(--muted); font-size: .85rem; }
+.value { font-weight: 650; margin-top: 4px; overflow-wrap: anywhere; }
+#connection { color: var(--accent); }
+#notice { color: var(--muted); min-height: 1.4em; margin-top: 12px; }
+footer { color: var(--muted); font-size: .8rem; text-align: center; }
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>Toki 🤖</h1>
+  <div class="subtitle">Your little Wi-Fi companion</div>
+</header>
+
+<section class="panel">
+  <h2>Device connection</h2>
+  <div class="status">
+    <div><div class="label">Connection</div>
+      <div class="value" id="connection">Connecting...</div></div>
+    <div><div class="label">IP address</div>
+      <div class="value" id="ip">--</div></div>
+  </div>
+  <div id="notice" role="status" aria-live="polite"></div>
+</section>
+
+<section class="panel">
+  <h2>Choose an expression</h2>
+  <div class="grid">
+    <button class="primary" onclick="command('/api/mood?value=happy')">😊 Happy</button>
+    <button onclick="command('/api/mood?value=curious')">🤔 Curious</button>
+    <button onclick="command('/api/mood?value=sleepy')">😴 Sleepy</button>
+    <button onclick="command('/api/mood?value=surprised')">😮 Surprised</button>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Eye movement</h2>
+  <div class="row">
+    <button onclick="command('/api/gaze?value=left')">← Left</button>
+    <button onclick="command('/api/gaze?value=center')">Center</button>
+    <button onclick="command('/api/gaze?value=right')">Right →</button>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <button onclick="command('/api/blink')">Blink</button>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Autonomous behaviour</h2>
+  <div class="row">
+    <button class="primary" onclick="command('/api/idle?enabled=1')">Idle ON</button>
+    <button onclick="command('/api/idle?enabled=0')">Idle OFF</button>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Current state</h2>
+  <div class="status">
+    <div><div class="label">Mood</div><div class="value" id="mood">--</div></div>
+    <div><div class="label">Gaze</div><div class="value" id="gaze">--</div></div>
+    <div><div class="label">Idle behaviour</div><div class="value" id="idle">--</div></div>
+    <div><div class="label">Wi-Fi signal</div><div class="value" id="signal">--</div></div>
+  </div>
+</section>
+
+<footer>Toki Stage 3 · ESP32-hosted interface</footer>
+</main>
+
+<script>
+const notice = document.getElementById('notice');
+
+async function command(path) {
+  notice.textContent = 'Sending command...';
+  try {
+    const response = await fetch(path, {cache: 'no-store'});
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || 'Command failed');
+    }
+
+    notice.textContent = data.message || 'Command sent';
+    await refreshState();
+  } catch (e) {
+    notice.textContent = 'Request failed: ' + e.message;
+  }
+}
+
+async function refreshState() {
+  try {
+    const response = await fetch('/api/state', {cache: 'no-store'});
+    if (!response.ok) throw new Error('Device unavailable');
+
+    const s = await response.json();
+    document.getElementById('connection').textContent = 'Online';
+    document.getElementById('ip').textContent = s.ip;
+    document.getElementById('mood').textContent = s.mood;
+    document.getElementById('gaze').textContent = s.gaze;
+    document.getElementById('idle').textContent = s.idle ? 'On' : 'Off';
+    document.getElementById('signal').textContent = s.rssi + ' dBm';
+  } catch (e) {
+    document.getElementById('connection').textContent = 'Unavailable';
+  }
+}
+
+refreshState();
+setInterval(refreshState, 2500);
+</script>
+</body>
+</html>

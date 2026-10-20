@@ -20,7 +20,7 @@ Adafruit_SSD1306 display(
   OLED_RESET
 );
 
-// ---------- Mimo's moods ----------
+// ---------- toki's moods ----------
 enum Mood {
   HAPPY,
   CURIOUS,
@@ -136,7 +136,7 @@ void setup() {
   display.setTextColor(SSD1306_WHITE);
   display.setTextSize(1);
   display.setCursor(36, 27);
-  display.println("Hi! I'm Mimo");
+  display.println("Hi! I'm toki");
   display.display();
 
   delay(1200);
@@ -146,7 +146,7 @@ void setup() {
   lastBlink = millis();
 
   drawFace();
-  Serial.println("Mimo is ready!");
+  Serial.println("toki is ready!");
 }
 
 // ---------- Main loop ----------
